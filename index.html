@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/png" href="images/favicon.png">
-<title>Ben Pontius | VFX & 3D Artist</title>
+<title>Ben Pontius | Visual Effects & Character Animator</title>
 
 <style>
 body {
@@ -18,16 +17,17 @@ body {
 /* HERO (SMALLER LOOP AREA) */
 header {
     position: relative;
-    height: 32vh;
-    overflow: hidden;
+    min-height: 32vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+    box-sizing: border-box;
     background: #fafafa;
 }
 
 .hero-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
     z-index: 2;
     background: #ffffff;
     color: #111;
@@ -100,12 +100,7 @@ h2 {
     opacity: 0;
 }
 
-/* REELS */
-.buttons {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
+/* BUTTONS */
 button {
     background: #f0f0f0;
     color: #111;
@@ -118,43 +113,6 @@ button {
 
 button:hover {
     background: #e0e0e0;
-}
-
-.reel iframe {
-    width: 100%;
-    height: 500px;
-    border: none;
-}
-
-/* PROJECTS */
-.projects {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
-}
-
-.project {
-    position: relative;
-    overflow: hidden;
-    border-radius: 12px;
-}
-
-.project img {
-    width: 100%;
-    display: block;
-    transition: 0.4s;
-}
-
-.project:hover img {
-    transform: scale(1.1);
-}
-
-.project-overlay {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    padding: 20px;
-    background: rgba(0,0,0,0.7);
 }
 
 /* TETROMINO LAYOUT — reel tiles centered on top, 3 projects underneath */
@@ -173,15 +131,15 @@ button:hover {
     opacity: 1;
 }
 
-.project-detail .reel-row {
-    margin-top: 20px;
-}
-
 /* Tiles cap at 353px but never force overflow — they shrink proportionally */
 .reel-row .home-tile {
     flex: 0 1 353px;
     max-width: 353px;
     min-width: 0;
+}
+
+.reel-row.no-reels {
+    margin-bottom: -20px;
 }
 
 .project-row {
@@ -263,6 +221,31 @@ button:hover {
     display: block;
 }
 
+.detail-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.9);
+    color: #111;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.detail-close:hover {
+    background: #fff;
+    transform: scale(1.08);
+}
+
 .reel-thumb {
     width: 100%;
     height: 100%;
@@ -323,7 +306,7 @@ button:hover {
     aspect-ratio: 4 / 3;
     background: #f0f0f0;
     border: 1px solid #e5e5e5;
-    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.45, 0, 0.2, 1);
     opacity: 1;
 }
 
@@ -375,7 +358,6 @@ button:hover {
 
 /* Demo reel tile always sits at the top of the tetromino */
 .reel-tile {
-    grid-area: reel;
     border: 2px solid #ccc;
 }
 
@@ -446,6 +428,7 @@ footer {
             <a href="#work" data-filter="home">Home</a>
             <a href="#work" data-filter="animate">Animation</a>
             <a href="#work" data-filter="vfx">Effects</a>
+            <a href="#work" data-filter="misc">Misc.</a>
             <a href="#info-page" data-filter="info">Info</a>
         </div>
     </div>
@@ -457,7 +440,7 @@ footer {
 
         <!-- DEMO REELS — centered, evenly spaced row at the top -->
         <div class="reel-row">
-            <div class="home-tile reel-tile" id="reel-animate" data-embed-src="https://youtu.be/yeXHNfiOIGo">
+            <div class="home-tile reel-tile" id="reel-animate" data-embed-src="https://www.youtube.com/embed/YOUR_DEMO_REEL">
                 <span class="reel-label">ANIMATE</span>
                 <div class="reel-thumb">
                     <svg class="play-icon" viewBox="0 0 68 48" width="56" height="40" aria-hidden="true">
@@ -481,6 +464,11 @@ footer {
         <!-- Expanded project detail view — hidden until a project or reel tile is clicked -->
         <div class="project-detail" id="project-detail" style="display:none;">
             <div class="detail-image">
+                <button class="detail-close" id="detail-close-btn" type="button" aria-label="Close project">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                        <path d="M5 5l14 14M19 5L5 19"/>
+                    </svg>
+                </button>
                 <img id="detail-img" src="" alt="Selected project">
                 <iframe id="detail-video" src="" allowfullscreen style="display:none;"></iframe>
                 <div class="detail-video-slot" id="detail-video-slot" style="display:none;">
@@ -500,7 +488,7 @@ footer {
 
         <!-- All project tiles share one grid so filtering reflows them cleanly -->
         <div class="project-row">
-        <div class="home-tile tile-p1 category-animation">
+        <div class="home-tile category-animation">
             <img src="https://cdn.pixabay.com/photo/2019/06/17/06/43/rose-4279205_1280.jpg" alt="Rose placeholder image">
             <div class="project-overlay">
                 <h3>Robot Testing</h3>
@@ -508,7 +496,7 @@ footer {
             </div>
         </div>
 
-        <div class="home-tile tile-p2 category-effects">
+        <div class="home-tile category-effects">
             <img src="https://cdn.pixabay.com/photo/2018/04/17/13/15/cherry-blossoms-3327498_640.jpg" alt="Cherry blossom placeholder image">
             <div class="project-overlay">
                 <h3>Kyber</h3>
@@ -516,7 +504,7 @@ footer {
             </div>
         </div>
 
-        <div class="home-tile tile-p3 category-effects">
+        <div class="home-tile category-effects">
             <img src="https://cdn.pixabay.com/photo/2023/05/08/15/14/dogwood-7978952_640.jpg" alt="Dogwood flower placeholder image">
             <div class="project-overlay">
                 <h3>Dragon Rampage</h3>
@@ -547,7 +535,23 @@ footer {
                 <p>Short project description.</p>
             </div>
         </div>
-        <!-- Copy a .home-tile block above (with category-animation or category-effects) to add another project -->
+
+        <div class="home-tile category-misc">
+            <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%23dcebd2'/%3E%3Crect y='480' width='800' height='120' fill='%23b9d4a3'/%3E%3Crect x='376' y='300' width='48' height='200' fill='%237a5230'/%3E%3Ccircle cx='400' cy='250' r='130' fill='%234f8a3c'/%3E%3Ccircle cx='320' cy='300' r='90' fill='%235e9e48'/%3E%3Ccircle cx='480' cy='300' r='90' fill='%235e9e48'/%3E%3Ccircle cx='400' cy='190' r='90' fill='%236fb257'/%3E%3C/svg%3E" alt="Tree placeholder image">
+            <div class="project-overlay">
+                <h3>Project Title</h3>
+                <p>Short project description.</p>
+            </div>
+        </div>
+
+        <div class="home-tile category-misc">
+            <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%23d6e6f0'/%3E%3Crect y='480' width='800' height='120' fill='%23c3d8e6'/%3E%3Crect x='380' y='440' width='40' height='70' fill='%236b4a2f'/%3E%3Cpolygon points='400,100 300,260 500,260' fill='%23478f66'/%3E%3Cpolygon points='400,170 280,350 520,350' fill='%233b7d58'/%3E%3Cpolygon points='400,250 260,450 540,450' fill='%232f6b4a'/%3E%3C/svg%3E" alt="Pine tree placeholder image">
+            <div class="project-overlay">
+                <h3>Project Title</h3>
+                <p>Short project description.</p>
+            </div>
+        </div>
+        <!-- Copy a .home-tile block above (with category-animation, category-effects or category-misc) to add another project -->
         </div>
 
     </div>
@@ -562,10 +566,10 @@ footer {
     </p>
 
     <h2>Contact</h2>
-    <p>Email: your@email.com</p>
+    <p>Email: benpontius03@gmail.com</p>
 
     <!-- RESUME DOWNLOAD -->
-    <a class="download" href="files/Resume.pdf">
+    <a class="download" href="files/Resume.pdf" download>
         View Resume
     </a>
 </section>
@@ -587,6 +591,13 @@ footer {
 </footer>
 
 <script>
+/* Clear the inline styles used when a tile is pulled out of the flow */
+function resetInline(el) {
+    ['position', 'top', 'left', 'width', 'height', 'boxSizing', 'margin', 'zIndex'].forEach(function (p) {
+        el.style[p] = '';
+    });
+}
+
 function getAllAnimatable() {
     return Array.prototype.slice.call(document.querySelectorAll('.tetromino .home-tile'));
 }
@@ -596,6 +607,7 @@ function getVisibleSet(view) {
     var reelVfx = document.getElementById('reel-vfx');
     var animationTiles = Array.prototype.slice.call(document.querySelectorAll('.category-animation'));
     var effectsTiles = Array.prototype.slice.call(document.querySelectorAll('.category-effects'));
+    var miscTiles = Array.prototype.slice.call(document.querySelectorAll('.category-misc'));
     var set = new Set();
 
     if (view === 'animate') {
@@ -604,11 +616,14 @@ function getVisibleSet(view) {
     } else if (view === 'vfx') {
         set.add(reelVfx);
         effectsTiles.forEach(function (el) { set.add(el); });
+    } else if (view === 'misc') {
+        miscTiles.forEach(function (el) { set.add(el); });
     } else {
         set.add(reelAnimate);
         set.add(reelVfx);
         animationTiles.forEach(function (el) { set.add(el); });
         effectsTiles.forEach(function (el) { set.add(el); });
+        miscTiles.forEach(function (el) { set.add(el); });
     }
     return set;
 }
@@ -634,13 +649,7 @@ function filterWork(view) {
         var wasVisible = first.has(el);
 
         if (shouldShow) {
-            el.style.position = '';
-            el.style.top = '';
-            el.style.left = '';
-            el.style.width = '';
-            el.style.height = '';
-            el.style.boxSizing = '';
-            el.style.zIndex = '';
+            resetInline(el);
             el.style.display = '';
         } else if (wasVisible) {
             var r = first.get(el);
@@ -655,6 +664,12 @@ function filterWork(view) {
             el.style.display = 'none';
         }
     });
+
+    // Misc. has no demo reel, so close up the empty reel row's gap
+    var anyReel = tiles.some(function (el) {
+        return el.classList.contains('reel-tile') && showSet.has(el);
+    });
+    document.querySelector('.reel-row').classList.toggle('no-reels', !anyReel);
 
     // LAST: record new positions now that layout has updated
     var last = new Map();
@@ -693,13 +708,7 @@ function filterWork(view) {
             setTimeout(function () {
                 if (el.classList.contains('js-fade-out')) {
                     el.style.display = 'none';
-                    el.style.position = '';
-                    el.style.top = '';
-                    el.style.left = '';
-                    el.style.width = '';
-                    el.style.height = '';
-                    el.style.boxSizing = '';
-                    el.style.zIndex = '';
+                    resetInline(el);
                 }
             }, 400);
         }
@@ -751,6 +760,8 @@ document.querySelectorAll('.nav a[data-filter]').forEach(function (link) {
 /* PROJECT + REEL DETAIL EXPAND/COLLAPSE */
 var selectedTile = null;
 var selectedIsReel = false;
+var scrollTimer = null;
+var openToken = 0;
 
 function getProjectTiles() {
     return Array.prototype.slice.call(document.querySelectorAll('.project-row .home-tile'));
@@ -797,40 +808,98 @@ function pullOutAndFade(el) {
     setTimeout(function () {
         if (el.classList.contains('js-fade-out')) {
             el.style.display = 'none';
-            el.style.position = '';
-            el.style.top = '';
-            el.style.left = '';
-            el.style.width = '';
-            el.style.height = '';
-            el.style.boxSizing = '';
-            el.style.margin = '';
-            el.style.zIndex = '';
+            resetInline(el);
         }
     }, 400);
 }
 
 function settleIn(el) {
+    el.classList.add('js-fade-out');
     el.style.display = '';
-    el.classList.remove('js-fade-out');
     void el.offsetWidth;
+    el.classList.remove('js-fade-out');
+}
+
+/* Ghost copy of the expanded window (used to shrink it back to its tile) */
+function makeDetailGhost(detail, dRect, pinToViewport) {
+    var ghost = detail.cloneNode(true);
+    ghost.removeAttribute('id');
+    Array.prototype.forEach.call(ghost.querySelectorAll('[id]'), function (n) { n.removeAttribute('id'); });
+    var ghostVideo = ghost.querySelector('iframe');
+    if (ghostVideo) ghostVideo.parentNode.removeChild(ghostVideo);
+    var ghostClose = ghost.querySelector('.detail-close');
+    if (ghostClose) ghostClose.parentNode.removeChild(ghostClose);
+    ghost.classList.remove('js-fade-out');
+    ghost.style.display = '';
+    if (pinToViewport) {
+        // Stays put on screen even if the page height changes underneath it
+        ghost.style.position = 'fixed';
+        ghost.style.left = dRect.left + 'px';
+        ghost.style.top = dRect.top + 'px';
+    } else {
+        ghost.style.position = 'absolute';
+        ghost.style.left = (dRect.left + window.pageXOffset) + 'px';
+        ghost.style.top = (dRect.top + window.pageYOffset) + 'px';
+    }
+    ghost.style.width = dRect.width + 'px';
+    ghost.style.margin = '0';
+    ghost.style.zIndex = '50';
+    ghost.style.pointerEvents = 'none';
+    ghost.style.transformOrigin = 'top left';
+    ghost.style.transition = 'none';
+    ghost.style.opacity = '1';
+    document.body.appendChild(ghost);
+    return ghost;
+}
+
+/* Shrink + fade a detail ghost toward a tile's current spot */
+function shrinkGhostToTile(ghost, dRect, tile) {
+    var tRect = tile.getBoundingClientRect();
+    var scale = tRect.width / dRect.width;
+    var dx = tRect.left - dRect.left;
+    var dy = tRect.top - dRect.top;
+    void ghost.offsetWidth;
+    ghost.style.transition = 'transform 0.6s cubic-bezier(0.45, 0, 0.2, 1), opacity 0.5s ease 0.1s';
+    ghost.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + scale + ')';
+    ghost.style.opacity = '0';
+    setTimeout(function () {
+        if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
+    }, 700);
+}
+
+function stopDetailVideo() {
+    var detailVideo = document.getElementById('detail-video');
+    var videoSlot = document.getElementById('detail-video-slot');
+    detailVideo.src = '';
+    detailVideo.style.display = 'none';
+    videoSlot.style.display = 'none';
 }
 
 function openDetail(tile) {
     if (selectedTile === tile) return;
-    if (selectedTile) {
-        closeDetailImmediate();
+
+    var detail = document.getElementById('project-detail');
+
+    // If another project is already open, it will shrink back to its own tile
+    // while the clicked tile grows into the expanded window (a swap)
+    var prevTile = selectedTile;
+    var prevGhost = null;
+    var prevRect = null;
+    if (prevTile) {
+        clearTimeout(scrollTimer);
+        prevRect = detail.getBoundingClientRect();
+        prevGhost = makeDetailGhost(detail, prevRect);
+        stopDetailVideo();
     }
 
     var isReel = tile.classList.contains('reel-tile');
     selectedTile = tile;
     selectedIsReel = isReel;
 
-    var detail = document.getElementById('project-detail');
     var detailImg = document.getElementById('detail-img');
     var detailVideo = document.getElementById('detail-video');
     var videoSlot = document.getElementById('detail-video-slot');
     var playBtn = document.getElementById('detail-play-btn');
-    var reelRow = document.querySelector('.reel-row');
 
     if (isReel) {
         var label = tile.querySelector('.reel-label');
@@ -853,31 +922,101 @@ function openDetail(tile) {
         detailImg.style.display = '';
         document.getElementById('detail-title').textContent = titleEl ? titleEl.textContent : 'Project Title';
         document.getElementById('detail-description').textContent =
-            'Add more information about this project here — process, tools used, and outcome.';
+            'Add more information about this project here \u2014 process, tools used, and outcome.';
     }
 
-    // Figure out which sibling tiles need to glide into their new positions
-    var siblings = getProjectTiles().filter(function (t) { return t.style.display !== 'none'; });
+    // Ghost copy of the tile that will grow into the expanded window
+    var startRect = tile.getBoundingClientRect();
+    var ghost = tile.cloneNode(true);
+    ghost.removeAttribute('id');
+    Array.prototype.forEach.call(ghost.querySelectorAll('[id]'), function (n) { n.removeAttribute('id'); });
+    Array.prototype.forEach.call(ghost.querySelectorAll('.project-overlay, .reel-label'), function (n) {
+        n.parentNode.removeChild(n);
+    });
+    ghost.classList.remove('js-fade-out');
+    ghost.style.display = '';
+    ghost.style.position = 'absolute';
+    ghost.style.boxSizing = 'border-box';
+    ghost.style.margin = '0';
+    ghost.style.left = (startRect.left + window.pageXOffset) + 'px';
+    ghost.style.top = (startRect.top + window.pageYOffset) + 'px';
+    ghost.style.width = startRect.width + 'px';
+    ghost.style.height = startRect.height + 'px';
+    ghost.style.zIndex = '50';
+    ghost.style.pointerEvents = 'none';
+    ghost.style.transition = 'none';
+    ghost.style.opacity = '1';
+    document.body.appendChild(ghost);
 
-    flipElements(siblings, function () {
-        pullOutAndFade(tile);
-        settleIn(detail);
-        detail.appendChild(reelRow);
+    // Tiles that just need to glide to their new positions
+    var siblings = getProjectTiles().concat(getReelTiles()).filter(function (t) {
+        return t !== tile && t !== prevTile && t.style.display !== 'none';
     });
 
-    document.getElementById('work').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    flipElements(siblings, function () {
+        // Pull the clicked tile out first, while it is still where the user clicked
+        pullOutAndFade(tile);
+
+        // Put the previously open tile back in the grid (invisible until its ghost arrives)
+        if (prevTile) {
+            prevTile.classList.add('js-fade-out');
+            resetInline(prevTile);
+            prevTile.style.display = '';
+        }
+
+        // Real detail window holds its place in the layout but stays invisible
+        // until the growing ghost lands
+        detail.style.transition = 'none';
+        detail.classList.add('js-fade-out');
+        detail.style.display = '';
+        void detail.offsetWidth;
+        detail.style.transition = '';
+    });
+
     syncReelTileWidth();
+
+    // Old expanded window shrinks back to its tile
+    if (prevTile) {
+        shrinkGhostToTile(prevGhost, prevRect, prevTile);
+        void prevTile.offsetWidth;
+        prevTile.classList.remove('js-fade-out');
+    }
+
+    // New tile grows into the expanded image area
+    var endRect = detail.querySelector('.detail-image').getBoundingClientRect();
+    void ghost.offsetWidth;
+    ghost.style.transition = 'left 0.6s cubic-bezier(0.45, 0, 0.2, 1), top 0.6s cubic-bezier(0.45, 0, 0.2, 1), width 0.6s cubic-bezier(0.45, 0, 0.2, 1), height 0.6s cubic-bezier(0.45, 0, 0.2, 1)';
+    ghost.style.left = (endRect.left + window.pageXOffset) + 'px';
+    ghost.style.top = (endRect.top + window.pageYOffset) + 'px';
+    ghost.style.width = endRect.width + 'px';
+    ghost.style.height = endRect.height + 'px';
+
+    // Once the ghost has landed, fade the real window in underneath it,
+    // then remove the ghost when the real one is fully visible
+    var myToken = ++openToken;
+    setTimeout(function () {
+        if (myToken === openToken && selectedTile === tile) {
+            detail.classList.remove('js-fade-out');
+        }
+    }, 600);
+    setTimeout(function () {
+        if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
+    }, 1050);
+
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function () {
+        document.getElementById('work').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 500);
 }
 
 function closeDetailImmediate() {
     if (!selectedTile) return;
+    clearTimeout(scrollTimer);
     var tile = selectedTile;
     selectedTile = null;
     selectedIsReel = false;
 
     var detail = document.getElementById('project-detail');
-    var tetromino = document.querySelector('.tetromino');
-    var reelRow = document.querySelector('.reel-row');
     var detailVideo = document.getElementById('detail-video');
     var videoSlot = document.getElementById('detail-video-slot');
 
@@ -890,30 +1029,56 @@ function closeDetailImmediate() {
     });
 
     flipElements(siblings, function () {
-        tetromino.insertBefore(reelRow, detail);
-
         detail.style.display = 'none';
         detail.classList.remove('js-fade-out');
 
         tile.style.display = '';
         tile.classList.remove('js-fade-out');
-        tile.style.position = '';
-        tile.style.top = '';
-        tile.style.left = '';
-        tile.style.width = '';
-        tile.style.height = '';
-        tile.style.boxSizing = '';
-        tile.style.margin = '';
-        tile.style.zIndex = '';
+        resetInline(tile);
     });
 
     syncReelTileWidth();
 }
 
+/* Smooth close: a ghost copy of the expanded window shrinks and fades toward
+   the tile's spot while the grid reflows and the tile fades back in */
+function closeDetailSmooth() {
+    if (!selectedTile) return;
+    clearTimeout(scrollTimer);
+    var tile = selectedTile;
+    selectedTile = null;
+    selectedIsReel = false;
+
+    var detail = document.getElementById('project-detail');
+    var dRect = detail.getBoundingClientRect();
+    var ghost = makeDetailGhost(detail, dRect, true);
+    stopDetailVideo();
+
+    var siblings = getProjectTiles().concat(getReelTiles()).filter(function (t) {
+        return t !== tile && t.style.display !== 'none';
+    });
+
+    flipElements(siblings, function () {
+        detail.style.display = 'none';
+        detail.classList.remove('js-fade-out');
+
+        tile.classList.add('js-fade-out');
+        resetInline(tile);
+        tile.style.display = '';
+    });
+
+    syncReelTileWidth();
+    shrinkGhostToTile(ghost, dRect, tile);
+
+    // Fade the real tile back in as the ghost arrives
+    void tile.offsetWidth;
+    tile.classList.remove('js-fade-out');
+}
+
 getProjectTiles().concat(getReelTiles()).forEach(function (tile) {
     tile.addEventListener('click', function () {
         if (selectedTile === tile) {
-            closeDetailImmediate();
+            closeDetailSmooth();
         } else {
             openDetail(tile);
         }
@@ -930,6 +1095,11 @@ document.getElementById('detail-play-btn').addEventListener('click', function (e
     detailVideo.src = src + separator + 'autoplay=1';
     detailVideo.style.display = '';
     videoSlot.style.display = 'none';
+});
+
+document.getElementById('detail-close-btn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    closeDetailSmooth();
 });
 
 /* Keep the ANIMATE/VFX rectangles exactly the same size as the project

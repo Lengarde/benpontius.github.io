@@ -315,6 +315,7 @@ function openDetail(tile) {
         detailVideo.style.display = 'none';
         detailVideo.src = '';
         playBtn.dataset.embedSrc = tile.dataset.embedSrc || '';
+        videoSlot.style.backgroundImage = tile.dataset.thumb ? 'url("' + tile.dataset.thumb + '")' : '';
         videoSlot.style.display = 'flex';
         document.getElementById('detail-title').textContent = label ? label.textContent : 'Reel';
         document.getElementById('detail-description').textContent =
@@ -557,3 +558,9 @@ syncReelTileWidth();
         });
     }
 })();
+
+/* Reel cover images: add data-thumb="path/to/image.jpg" to a reel tile in index.html */
+Array.prototype.forEach.call(document.querySelectorAll('.reel-tile[data-thumb]'), function (tile) {
+    var thumb = tile.querySelector('.reel-thumb');
+    if (thumb) thumb.style.backgroundImage = 'url("' + tile.dataset.thumb + '")';
+});

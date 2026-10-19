@@ -301,10 +301,12 @@ button:hover {
     padding: 0;
     cursor: pointer;
     line-height: 0;
+    border-radius: 50%;
     transition: transform 0.2s ease;
 }
 
 .play-button:hover {
+    background: none;
     transform: scale(1.08);
 }
 
@@ -501,4 +503,19 @@ footer {
         letter-spacing: 0.3px;
         padding: 12px 8px;
     }
+}
+
+/* PLAY BUTTON — simple semi-transparent white circle with a dark triangle */
+.play-icon {
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+}
+
+.play-icon circle {
+    fill: rgba(255, 255, 255, 0.65);
+    stroke: rgba(255, 255, 255, 0.9);
+    stroke-width: 2;
+}
+
+.play-icon path {
+    fill: #222;
 }

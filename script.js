@@ -167,8 +167,77 @@ document.querySelectorAll('.nav a[data-filter]').forEach(function (link) {
 /* PROJECT + REEL DETAIL EXPAND/COLLAPSE */
 var selectedTile = null;
 var selectedIsReel = false;
-var scrollTimer = null;
+var scrollAnimId = null;
 var openToken = 0;
+
+/* SYNCED SCROLL — glides the page so the expanded window ends up centered
+   (slightly above true center), running alongside the grow animation. */
+var SCROLL_EASE = [0.45, 0, 0.2, 1]; // same curve as the tile expansion in CSS/JS
+
+function cubicBezierEase(x1, y1, x2, y2) {
+    function bez(t, a, b) {
+        var u = 1 - t;
+        return 3 * u * u * t * a + 3 * u * t * t * b + t * t * t;
+    }
+    return function (x) {
+        if (x <= 0) return 0;
+        if (x >= 1) return 1;
+        var lo = 0, hi = 1, t = x;
+        for (var i = 0; i < 24; i++) {
+            t = (lo + hi) / 2;
+            if (bez(t, x1, x2) < x) lo = t; else hi = t;
+        }
+        return bez(t, y1, y2);
+    };
+}
+var scrollEase = cubicBezierEase(SCROLL_EASE[0], SCROLL_EASE[1], SCROLL_EASE[2], SCROLL_EASE[3]);
+
+function cancelScrollAnim() {
+    if (scrollAnimId !== null) {
+        cancelAnimationFrame(scrollAnimId);
+        scrollAnimId = null;
+    }
+}
+
+function scrollDetailIntoView(detail, duration) {
+    cancelScrollAnim();
+
+    var rect = detail.getBoundingClientRect();
+    var viewH = window.innerHeight;
+    var startY = window.pageYOffset;
+    var detailTop = rect.top + startY;
+
+    // Center the window, then nudge it up a bit (about 6% of the screen height)
+    var targetY = detailTop + rect.height / 2 - viewH / 2 - viewH * 0.06;
+
+    // If the window is taller than the screen, keep its top edge visible instead
+    if (rect.height > viewH - 40) targetY = detailTop - 20;
+
+    var maxY = document.documentElement.scrollHeight - viewH;
+    targetY = Math.max(0, Math.min(targetY, maxY));
+
+    var distance = targetY - startY;
+    if (Math.abs(distance) < 2) return;
+
+    var startTime = null;
+
+    function step(now) {
+        if (startTime === null) startTime = now;
+        var p = Math.min((now - startTime) / duration, 1);
+        window.scrollTo({ top: startY + distance * scrollEase(p), left: 0, behavior: 'instant' });
+        if (p < 1) {
+            scrollAnimId = requestAnimationFrame(step);
+        } else {
+            scrollAnimId = null;
+        }
+    }
+    scrollAnimId = requestAnimationFrame(step);
+}
+
+// If the person scrolls or taps during the glide, let them take over
+['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (evt) {
+    window.addEventListener(evt, cancelScrollAnim, { passive: true });
+});
 
 function getProjectTiles() {
     return Array.prototype.slice.call(document.querySelectorAll('.project-row .home-tile'));
@@ -293,7 +362,7 @@ function openDetail(tile) {
     var prevGhost = null;
     var prevRect = null;
     if (prevTile) {
-        clearTimeout(scrollTimer);
+        cancelScrollAnim();
         prevRect = detail.getBoundingClientRect();
         prevGhost = makeDetailGhost(detail, prevRect);
         stopDetailVideo();
@@ -411,15 +480,14 @@ function openDetail(tile) {
         if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
     }, 1050);
 
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(function () {
-        document.getElementById('work').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 500);
+    // Scroll at the same time as the expansion, using the same duration and
+    // easing, so the page glides up while the tile grows
+    scrollDetailIntoView(detail, 600);
 }
 
 function closeDetailImmediate() {
     if (!selectedTile) return;
-    clearTimeout(scrollTimer);
+    cancelScrollAnim();
     var tile = selectedTile;
     selectedTile = null;
     selectedIsReel = false;
@@ -452,7 +520,7 @@ function closeDetailImmediate() {
    the tile's spot while the grid reflows and the tile fades back in */
 function closeDetailSmooth() {
     if (!selectedTile) return;
-    clearTimeout(scrollTimer);
+    cancelScrollAnim();
     var tile = selectedTile;
     selectedTile = null;
     selectedIsReel = false;

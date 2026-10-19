@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -42,6 +44,24 @@ h2 {
     margin-bottom: 15px;
 }
 
+/* Header name + profession — thin geometric sans to match the reference site */
+.hero-content h1 {
+    font-family: 'Proxima Nova', 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 3.2rem;
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: #2b2b2b;
+}
+
+.hero-content h2 {
+    font-family: 'Proxima Nova', 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: #2b2b2b;
+    margin-top: 14px;
+}
+
 /* NAVIGATION */
 .nav {
     display: flex;
@@ -52,17 +72,22 @@ h2 {
 }
 
 .nav a {
+    font-family: 'Proxima Nova', 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 2px;
     text-decoration: none;
-    color: #111;
-    background: #f0f0f0;
-    padding: 10px 16px;
-    border-radius: 6px;
-    transition: 0.3s;
-    border: 1px solid #ddd;
+    color: #666;
+    background: none;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 0;
+    transition: color 0.3s ease;
 }
 
 .nav a:hover {
-    background: #e0e0e0;
+    background: none;
+    color: #111;
 }
 
 /* SECTIONS */
@@ -403,4 +428,68 @@ footer {
 
 .social-links a:hover {
     color: #111;
+}
+
+/* FLOATING NAV — semi-transparent pill that follows the user once the header nav scrolls out of view.
+   Same order as the header: Home, Animation, Effects, Misc., Info — spaced evenly. */
+.floating-nav {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translate(-50%, -16px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 18px;
+    max-width: calc(100% - 24px);
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 999px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+}
+
+.floating-nav.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+}
+
+.floating-nav a {
+    font-family: 'Proxima Nova', 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-decoration: none;
+    color: #555;
+    padding: 14px 16px;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: color 0.3s ease, background 0.3s ease;
+}
+
+.floating-nav a:hover {
+    color: #111;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 600px) {
+    .floating-nav {
+        gap: 2px;
+        padding: 5px 8px;
+    }
+    .floating-nav a {
+        font-size: 0.66rem;
+        letter-spacing: 0.3px;
+        padding: 12px 8px;
+    }
 }

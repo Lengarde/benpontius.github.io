@@ -522,3 +522,38 @@ function syncReelTileWidth() {
 
 window.addEventListener('resize', syncReelTileWidth);
 syncReelTileWidth();
+
+/* FLOATING NAV — a pill that follows the user once the header nav has scrolled out of view.
+   Built from the header links, so it always matches their order and stays in sync. */
+(function () {
+    var heroNav = document.querySelector('header .nav');
+    if (!heroNav) return;
+
+    var bar = document.createElement('nav');
+    bar.className = 'floating-nav';
+    bar.setAttribute('aria-label', 'Quick navigation');
+
+    Array.prototype.forEach.call(heroNav.querySelectorAll('a[data-filter]'), function (a) {
+        var copy = a.cloneNode(true);
+        copy.addEventListener('click', function (e) {
+            e.preventDefault();
+            navigateTo(copy.dataset.filter);
+        });
+        bar.appendChild(copy);
+    });
+    document.body.appendChild(bar);
+
+    function setVisible(show) {
+        bar.classList.toggle('is-visible', show);
+    }
+
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (entries) {
+            setVisible(!entries[0].isIntersecting);
+        }).observe(heroNav);
+    } else {
+        window.addEventListener('scroll', function () {
+            setVisible(heroNav.getBoundingClientRect().bottom < 0);
+        });
+    }
+})();

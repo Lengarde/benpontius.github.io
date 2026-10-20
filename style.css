@@ -519,3 +519,64 @@ footer {
 .play-icon path {
     fill: #222;
 }
+
+/* SLIDESHOW controls (multi-image projects) */
+.slide-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.slide-nav:hover {
+    background: #fff;
+    transform: translateY(-50%) scale(1.08);
+}
+
+.slide-prev { left: 12px; }
+.slide-next { right: 12px; }
+
+.slide-counter {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    color: #111;
+    background: rgba(255,255,255,0.88);
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+/* Horizontal swipes go to the slideshow; vertical scrolling still works */
+.detail-image {
+    touch-action: pan-y;
+}
+
+.detail-image img {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+@media (max-width: 600px) {
+    .slide-nav {
+        width: 34px;
+        height: 34px;
+    }
+}

@@ -305,6 +305,13 @@ function makeDetailGhost(detail, dRect, pinToViewport) {
     if (ghostVideo) ghostVideo.parentNode.removeChild(ghostVideo);
     var ghostClose = ghost.querySelector('.detail-close');
     if (ghostClose) ghostClose.parentNode.removeChild(ghostClose);
+    Array.prototype.forEach.call(ghost.querySelectorAll('.slide-nav, .slide-counter'), function (n) {
+        n.parentNode.removeChild(n);
+    });
+    // Make sure the shrinking copy shows the slide that is on screen right now
+    var ghostImg = ghost.querySelector('img');
+    var liveImg = document.getElementById('detail-img');
+    if (ghostImg && liveImg && liveImg.getAttribute('src')) ghostImg.setAttribute('src', liveImg.getAttribute('src'));
     ghost.classList.remove('js-fade-out');
     ghost.style.display = '';
     if (pinToViewport) {
@@ -326,6 +333,23 @@ function makeDetailGhost(detail, dRect, pinToViewport) {
     ghost.style.opacity = '1';
     document.body.appendChild(ghost);
     return ghost;
+}
+
+/* Copies of the close + slideshow buttons that ride along on the growing ghost, so they are
+   there as the window opens instead of waiting for the real window to fade in underneath */
+function addGhostControls(ghost) {
+    var added = [];
+    ['detail-close-btn', 'slide-prev', 'slide-next', 'slide-counter'].forEach(function (id) {
+        var src = document.getElementById(id);
+        if (!src || src.style.display === 'none') return;
+        var c = src.cloneNode(true);
+        c.removeAttribute('id');
+        c.style.opacity = '0';
+        c.style.pointerEvents = 'none';
+        ghost.appendChild(c);
+        added.push(c);
+    });
+    return added;
 }
 
 /* Shrink + fade a detail ghost toward a tile's current spot */
@@ -351,6 +375,141 @@ function stopDetailVideo() {
     videoSlot.style.display = 'none';
 }
 
+/* SLIDESHOW for multi-image projects (data-images="a.jpg|b.jpg|c.jpg" on a project tile) */
+var slideImages = [];
+var slideIndex = 0;
+
+var slideAnim = null; // the in-flight slide transition, if any
+
+function finishSlideAnim() {
+    if (slideAnim) slideAnim();
+}
+
+/* dir: 1 = next (new image enters from the right), -1 = previous (enters from the left).
+   Leave dir out to swap instantly with no animation. */
+function showSlide(i, dir) {
+    if (!slideImages.length) return;
+    finishSlideAnim(); // snap any transition still running so quick taps stay in sync
+
+    slideIndex = (i + slideImages.length) % slideImages.length;
+    document.getElementById('slide-counter').textContent = (slideIndex + 1) + ' / ' + slideImages.length;
+
+    var src = slideImages[slideIndex];
+    var current = document.getElementById('detail-img');
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!dir || reduceMotion || !current.getAttribute('src')) {
+        current.src = src;
+        return;
+    }
+
+    // The incoming image waits just off to one side, then both images slide across together
+    var box = current.parentNode;
+    var incoming = current.cloneNode(false);
+    incoming.removeAttribute('id');
+    incoming.style.cssText = 'position:absolute;top:0;left:0;transition:none;transform:translateX(' + (dir * 100) + '%);';
+    incoming.src = src;
+    box.insertBefore(incoming, current.nextSibling);
+
+    var done = false, timer = null;
+
+    function finish() {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        slideAnim = null;
+        // Hand the "main image" role to the incoming image (no src swap, so no flicker)
+        if (current.parentNode) current.parentNode.removeChild(current);
+        incoming.id = 'detail-img';
+        incoming.style.cssText = '';
+    }
+    slideAnim = finish;
+
+    function run() {
+        if (done) return;
+        var move = 'transform 0.45s cubic-bezier(0.45, 0, 0.2, 1)';
+        current.style.transition = move;
+        incoming.style.transition = move;
+        void incoming.offsetWidth;
+        current.style.transform = 'translateX(' + (-dir * 100) + '%)';
+        incoming.style.transform = 'translateX(0)';
+        timer = setTimeout(finish, 480);
+    }
+
+    // Wait until the new image is decoded so it never slides in blank
+    if (incoming.decode) incoming.decode().then(run, run); else run();
+}
+
+/* Remember the slide being viewed when a project closes, and make the tile's thumbnail match it,
+   so the shrinking window lands on an identical image (and reopening resumes there) */
+function rememberSlide(tile) {
+    finishSlideAnim();
+    if (!tile || tile.classList.contains('reel-tile') || slideImages.length < 2) return;
+    tile._slideIndex = slideIndex;
+    var thumb = tile.querySelector('img');
+    if (thumb) thumb.src = slideImages[slideIndex];
+}
+
+function setupSlides(images, start) {
+    finishSlideAnim();
+    slideImages = images;
+    slideIndex = 0;
+    var multi = images.length > 1;
+    ['slide-prev', 'slide-next', 'slide-counter'].forEach(function (id) {
+        document.getElementById(id).style.display = multi ? '' : 'none';
+    });
+    if (multi) {
+        showSlide(start || 0);
+        // warm the cache so flipping through is instant
+        images.slice(1).forEach(function (src) { new Image().src = src; });
+    }
+}
+
+function slideshowActive() {
+    return selectedTile && !selectedIsReel && slideImages.length > 1;
+}
+
+document.getElementById('slide-prev').addEventListener('click', function (e) {
+    e.stopPropagation();
+    showSlide(slideIndex - 1, -1);
+});
+document.getElementById('slide-next').addEventListener('click', function (e) {
+    e.stopPropagation();
+    showSlide(slideIndex + 1, 1);
+});
+
+document.addEventListener('keydown', function (e) {
+    if (!slideshowActive()) return;
+    if (e.key === 'ArrowLeft') showSlide(slideIndex - 1, -1);
+    if (e.key === 'ArrowRight') showSlide(slideIndex + 1, 1);
+});
+
+/* Swipe support (phones/tablets): swipe left = next, swipe right = previous */
+(function () {
+    var area = document.querySelector('.detail-image');
+    var startX = 0, startY = 0, tracking = false;
+
+    area.addEventListener('touchstart', function (e) {
+        if (!slideshowActive() || e.touches.length !== 1) { tracking = false; return; }
+        tracking = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    area.addEventListener('touchend', function (e) {
+        if (!tracking) return;
+        tracking = false;
+        var t = e.changedTouches[0];
+        var dx = t.clientX - startX;
+        var dy = t.clientY - startY;
+        // Needs to be a clear, mostly-horizontal swipe so normal scrolling isn't hijacked
+        if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        if (dx < 0) showSlide(slideIndex + 1, 1); else showSlide(slideIndex - 1, -1);
+    }, { passive: true });
+
+    area.addEventListener('touchcancel', function () { tracking = false; }, { passive: true });
+})();
+
 function openDetail(tile) {
     if (selectedTile === tile) return;
 
@@ -363,6 +522,7 @@ function openDetail(tile) {
     var prevRect = null;
     if (prevTile) {
         cancelScrollAnim();
+        rememberSlide(prevTile);
         prevRect = detail.getBoundingClientRect();
         prevGhost = makeDetailGhost(detail, prevRect);
         stopDetailVideo();
@@ -378,6 +538,7 @@ function openDetail(tile) {
     var playBtn = document.getElementById('detail-play-btn');
 
     if (isReel) {
+        setupSlides([]);
         var label = tile.querySelector('.reel-label');
         detailImg.style.display = 'none';
         detailImg.src = '';
@@ -395,7 +556,13 @@ function openDetail(tile) {
         detailVideo.style.display = 'none';
         detailVideo.src = '';
         videoSlot.style.display = 'none';
-        detailImg.src = img ? img.src : '';
+        var list = tile.dataset.images
+            ? tile.dataset.images.split('|').map(function (s) { return s.trim(); }).filter(Boolean)
+            : [];
+        if (!list.length && img) list = [img.src];
+        var start = tile._slideIndex || 0;
+        setupSlides(list, start);
+        detailImg.src = list[start] || list[0] || '';
         detailImg.style.display = '';
         document.getElementById('detail-title').textContent = titleEl ? titleEl.textContent : 'Project Title';
         document.getElementById('detail-description').textContent =
@@ -424,6 +591,7 @@ function openDetail(tile) {
     ghost.style.transition = 'none';
     ghost.style.opacity = '1';
     document.body.appendChild(ghost);
+    var ghostControls = addGhostControls(ghost);
 
     // Tiles that just need to glide to their new positions
     var siblings = getProjectTiles().concat(getReelTiles()).filter(function (t) {
@@ -467,6 +635,10 @@ function openDetail(tile) {
     ghost.style.top = (endRect.top + window.pageYOffset) + 'px';
     ghost.style.width = endRect.width + 'px';
     ghost.style.height = endRect.height + 'px';
+    ghostControls.forEach(function (c) {
+        c.style.transition = 'opacity 0.35s ease 0.15s';
+        c.style.opacity = '1';
+    });
 
     // Once the ghost has landed, fade the real window in underneath it,
     // then remove the ghost when the real one is fully visible
@@ -491,6 +663,7 @@ function closeDetailImmediate() {
     var tile = selectedTile;
     selectedTile = null;
     selectedIsReel = false;
+    rememberSlide(tile);
 
     var detail = document.getElementById('project-detail');
     var detailVideo = document.getElementById('detail-video');
@@ -524,6 +697,7 @@ function closeDetailSmooth() {
     var tile = selectedTile;
     selectedTile = null;
     selectedIsReel = false;
+    rememberSlide(tile);
 
     var detail = document.getElementById('project-detail');
     var dRect = detail.getBoundingClientRect();
@@ -631,4 +805,12 @@ syncReelTileWidth();
 Array.prototype.forEach.call(document.querySelectorAll('.reel-tile[data-thumb]'), function (tile) {
     var thumb = tile.querySelector('.reel-thumb');
     if (thumb) thumb.style.backgroundImage = 'url("' + tile.dataset.thumb + '")';
+});
+
+/* Slideshow projects: the grid thumbnail is always the first image in data-images,
+   so the tile and the expanded window start from the same picture */
+Array.prototype.forEach.call(document.querySelectorAll('.home-tile[data-images]'), function (tile) {
+    var first = tile.dataset.images.split('|').map(function (s) { return s.trim(); }).filter(Boolean)[0];
+    var thumb = tile.querySelector('img');
+    if (first && thumb) thumb.src = first;
 });

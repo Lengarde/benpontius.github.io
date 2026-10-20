@@ -556,16 +556,28 @@ function openDetail(tile) {
         detailVideo.style.display = 'none';
         detailVideo.src = '';
         videoSlot.style.display = 'none';
-        var list = tile.dataset.images
-            ? tile.dataset.images.split('|').map(function (s) { return s.trim(); }).filter(Boolean)
-            : [];
-        if (!list.length && img) list = [img.src];
-        var start = tile._slideIndex || 0;
-        setupSlides(list, start);
-        detailImg.src = list[start] || list[0] || '';
-        detailImg.style.display = '';
+        if (tile.dataset.video) {
+            // Video project: the expanded view shows the thumbnail with a play button,
+            // and the Vimeo embed loads when it is clicked (same as the reels)
+            setupSlides([]);
+            detailImg.style.display = 'none';
+            detailImg.src = '';
+            playBtn.dataset.embedSrc = tile.dataset.video;
+            var cover = tile.dataset.videoThumb || (img ? img.src : '');
+            videoSlot.style.backgroundImage = cover ? 'url("' + cover + '")' : '';
+            videoSlot.style.display = 'flex';
+        } else {
+            var list = tile.dataset.images
+                ? tile.dataset.images.split('|').map(function (s) { return s.trim(); }).filter(Boolean)
+                : [];
+            if (!list.length && img) list = [img.src];
+            var start = tile._slideIndex || 0;
+            setupSlides(list, start);
+            detailImg.src = list[start] || list[0] || '';
+            detailImg.style.display = '';
+        }
         document.getElementById('detail-title').textContent = titleEl ? titleEl.textContent : 'Project Title';
-        document.getElementById('detail-description').textContent =
+        document.getElementById('detail-description').textContent = tile.dataset.description ||
             'Add more information about this project here \u2014 process, tools used, and outcome.';
     }
 

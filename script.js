@@ -302,7 +302,7 @@ function makeDetailGhost(detail, dRect, pinToViewport) {
     var ghost = detail.cloneNode(true);
     ghost.removeAttribute('id');
     Array.prototype.forEach.call(ghost.querySelectorAll('[id]'), function (n) { n.removeAttribute('id'); });
-    Array.prototype.forEach.call(ghost.querySelectorAll('iframe'), function (f) {
+    Array.prototype.forEach.call(ghost.querySelectorAll('iframe, video, .backup-btn, .backup-note'), function (f) {
         f.parentNode.removeChild(f);
     });
     var ghostClose = ghost.querySelector('.detail-close');
@@ -372,11 +372,21 @@ function shrinkGhostToTile(ghost, dRect, tile) {
 
 function stopDetailVideo() {
     clearTrailer();
+    cancelVimeoWatch();
     var detailVideo = document.getElementById('detail-video');
     var videoSlot = document.getElementById('detail-video-slot');
+    var mp4 = document.getElementById('detail-mp4');
     detailVideo.src = '';
     detailVideo.style.display = 'none';
     videoSlot.style.display = 'none';
+    if (mp4) {
+        mp4.pause();
+        mp4.removeAttribute('src');
+        mp4.load();
+        mp4.style.display = 'none';
+    }
+    document.getElementById('backup-btn').style.display = 'none';
+    document.getElementById('backup-note').style.display = 'none';
 }
 
 /* SLIDESHOW for multi-image projects (data-images="a.jpg|b.jpg|c.jpg" on a project tile) */
@@ -657,6 +667,7 @@ function openDetail(tile) {
         detailVideo.style.display = 'none';
         detailVideo.src = '';
         playBtn.dataset.embedSrc = tile.dataset.embedSrc || '';
+        playBtn.dataset.backupSrc = tile.dataset.backup || '';
         videoSlot.style.backgroundImage = tile.dataset.thumb ? 'url("' + tile.dataset.thumb + '")' : '';
         videoSlot.style.display = 'flex';
         document.getElementById('detail-title').textContent = label ? label.textContent : 'Reel';
@@ -676,6 +687,7 @@ function openDetail(tile) {
             detailImg.style.display = 'none';
             detailImg.src = '';
             playBtn.dataset.embedSrc = tile.dataset.video;
+            playBtn.dataset.backupSrc = tile.dataset.backup || '';
             var cover = tile.dataset.videoThumb || (img ? img.src : '');
             videoSlot.style.backgroundImage = cover ? 'url("' + cover + '")' : '';
             videoSlot.style.display = 'flex';
@@ -792,13 +804,7 @@ function closeDetailImmediate() {
     rememberSlide(tile);
 
     var detail = document.getElementById('project-detail');
-    var detailVideo = document.getElementById('detail-video');
-    var videoSlot = document.getElementById('detail-video-slot');
-
-    detailVideo.src = '';
-    detailVideo.style.display = 'none';
-    videoSlot.style.display = 'none';
-    clearTrailer();
+    stopDetailVideo();
 
     var siblings = getProjectTiles().filter(function (t) {
         return t !== tile && t.style.display !== 'none';
@@ -862,16 +868,101 @@ getProjectTiles().concat(getReelTiles()).forEach(function (tile) {
     });
 });
 
+/* VIDEO PLAYBACK — Vimeo first, with an optional local mp4 backup (data-backup="videos/name.mp4").
+   If Vimeo doesn't answer within VIMEO_TIMEOUT ms (blocked, offline, or glitching), the page
+   switches to the mp4 on its own. The "Not loading? Play backup" button does the same by hand. */
+var VIMEO_TIMEOUT = 8000;
+var vimeoWatch = null; // { timer, onMessage, frame }
+var noteTimer = null;
+
+function isVideoFile(src) {
+    return /\.(mp4|webm|mov)(\?.*)?$/i.test(src);
+}
+
+function cancelVimeoWatch() {
+    if (!vimeoWatch) return;
+    clearTimeout(vimeoWatch.timer);
+    window.removeEventListener('message', vimeoWatch.onMessage);
+    vimeoWatch = null;
+}
+
+function playFile(src, showNote) {
+    cancelVimeoWatch();
+    var vid = document.getElementById('detail-mp4');
+    var frame = document.getElementById('detail-video');
+    var note = document.getElementById('backup-note');
+    frame.src = '';
+    frame.style.display = 'none';
+    document.getElementById('detail-video-slot').style.display = 'none';
+    document.getElementById('backup-btn').style.display = 'none';
+    vid.src = src;
+    vid.style.display = '';
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () { /* autoplay blocked: the controls are showing */ });
+
+    clearTimeout(noteTimer);
+    if (showNote) {
+        note.style.display = '';
+        noteTimer = setTimeout(function () { note.style.display = 'none'; }, 5000);
+    } else {
+        note.style.display = 'none';
+    }
+}
+
+/* Vimeo's player talks to the page with postMessage once it has loaded. Hearing from it means
+   Vimeo is alive; silence for VIMEO_TIMEOUT means it is not. */
+function watchVimeo(frame, backup) {
+    cancelVimeoWatch();
+    var watch = { timer: null, onMessage: null, frame: frame };
+    watch.onMessage = function (e) {
+        if (e.source !== frame.contentWindow) return;
+        if (!/^https:\/\/player\.vimeo\.com$/.test(e.origin)) return;
+        cancelVimeoWatch(); // it answered, so leave it alone
+    };
+    window.addEventListener('message', watch.onMessage);
+
+    // Prompt the player so it answers as soon as it has loaded
+    frame.addEventListener('load', function ping() {
+        frame.removeEventListener('load', ping);
+        try {
+            frame.contentWindow.postMessage(JSON.stringify({ method: 'addEventListener', value: 'ready' }), 'https://player.vimeo.com');
+        } catch (err) { /* ignore */ }
+    });
+
+    watch.timer = setTimeout(function () {
+        if (vimeoWatch !== watch) return;
+        playFile(backup, true);
+    }, VIMEO_TIMEOUT);
+    vimeoWatch = watch;
+}
+
+function playEmbed(src, backup) {
+    var frame = document.getElementById('detail-video');
+    var sep = src.indexOf('?') === -1 ? '?' : '&';
+
+    // No internet connection at all: go straight to the backup
+    if (backup && navigator.onLine === false) { playFile(backup, true); return; }
+
+    document.getElementById('backup-note').style.display = 'none';
+    frame.src = src + sep + 'autoplay=1';
+    frame.style.display = '';
+    document.getElementById('detail-video-slot').style.display = 'none';
+    document.getElementById('backup-btn').style.display = backup ? '' : 'none';
+    if (backup) watchVimeo(frame, backup);
+}
+
 document.getElementById('detail-play-btn').addEventListener('click', function (e) {
     e.stopPropagation();
     var src = this.dataset.embedSrc;
     if (!src) return;
-    var detailVideo = document.getElementById('detail-video');
-    var videoSlot = document.getElementById('detail-video-slot');
-    var separator = src.indexOf('?') === -1 ? '?' : '&';
-    detailVideo.src = src + separator + 'autoplay=1';
-    detailVideo.style.display = '';
-    videoSlot.style.display = 'none';
+    var backup = this.dataset.backupSrc || '';
+    if (isVideoFile(src)) playFile(src, false); else playEmbed(src, backup);
+});
+
+document.getElementById('backup-btn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var backup = document.getElementById('detail-play-btn').dataset.backupSrc;
+    if (backup) playFile(backup, false);
 });
 
 document.getElementById('detail-close-btn').addEventListener('click', function (e) {

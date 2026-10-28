@@ -754,3 +754,48 @@ footer {
 .detail-columns.trailer-only .detail-left {
     display: none;
 }
+
+
+/* LOCAL MP4 PLAYER + VIMEO BACKUP */
+.detail-image video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #000;
+    object-fit: contain;
+}
+
+.backup-btn {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    margin: 0;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #ddd;
+    border-radius: 999px;
+}
+
+.backup-btn:hover {
+    background: #fff;
+}
+
+.backup-note {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    z-index: 11;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    color: #111;
+    background: rgba(255,255,255,0.92);
+    border-radius: 999px;
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: calc(100% - 24px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

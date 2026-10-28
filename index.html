@@ -33,7 +33,7 @@
 
         <!-- DEMO REELS — centered, evenly spaced row at the top -->
         <div class="reel-row">
-            <div class="home-tile reel-tile" id="reel-animate" data-embed-src="https://player.vimeo.com/video/1240439446" data-thumb="images/animationthumb.png">
+            <div class="home-tile reel-tile" id="reel-animate" data-embed-src="https://player.vimeo.com/video/1240439446" data-backup="videos/animation_reel.mp4" data-thumb="images/animationthumb.png">
                 <span class="reel-label">Animation Reel</span>
                 <div class="reel-thumb">
                     <svg class="play-icon" viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
@@ -71,6 +71,9 @@
                 </button>
                 <div class="slide-counter" id="slide-counter" style="display:none;"></div>
                 <iframe id="detail-video" src="" allowfullscreen style="display:none;"></iframe>
+                <video id="detail-mp4" controls playsinline preload="metadata" style="display:none;"></video>
+                <button class="backup-btn" id="backup-btn" type="button" style="display:none;">Not loading? Play backup</button>
+                <div class="backup-note" id="backup-note" style="display:none;">Vimeo isn't responding &mdash; playing the backup copy.</div>
                 <div class="detail-video-slot" id="detail-video-slot" style="display:none;">
                     <button class="play-button" id="detail-play-btn" type="button" aria-label="Play video">
                         <svg class="play-icon" viewBox="0 0 64 64" width="72" height="72" aria-hidden="true">
@@ -112,6 +115,7 @@
         <!-- All project tiles share one grid so filtering reflows them cleanly -->
         <div class="project-row">
         <div class="home-tile category-animation" data-video="https://player.vimeo.com/video/1237753444"
+             data-backup="videos/kyber.mp4"
              data-description="Senior Capstone Project"
              data-role="Creative Lead|Environment Design"
              data-programs="Maya|images/icons/maya.png; DaVinci Resolve|images/icons/davinci.png; Reaper|images/icons/reaper.png"
@@ -123,7 +127,7 @@
             </div>
         </div>
 
-        <div class="home-tile category-animation" data-video="https://player.vimeo.com/video/1239759322" data-description="Dragon Walk &amp; Shake">
+        <div class="home-tile category-animation" data-video="https://player.vimeo.com/video/1239759322" data-backup="videos/dragon.mp4" data-description="Dragon Walk &amp; Shake">
             <img src="images/dragon.jpg" alt="Dragon">
             <div class="project-overlay">
                 <h3>Dragon Walk & Shake</h3>

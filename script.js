@@ -298,6 +298,7 @@ function settleIn(el) {
 
 /* Ghost copy of the expanded window (used to shrink it back to its tile) */
 function makeDetailGhost(detail, dRect, pinToViewport) {
+    if (!dRect || !dRect.width) return null;
     var ghost = detail.cloneNode(true);
     ghost.removeAttribute('id');
     Array.prototype.forEach.call(ghost.querySelectorAll('[id]'), function (n) { n.removeAttribute('id'); });
@@ -355,6 +356,7 @@ function addGhostControls(ghost) {
 
 /* Shrink + fade a detail ghost toward a tile's current spot */
 function shrinkGhostToTile(ghost, dRect, tile) {
+    if (!ghost) return;
     var tRect = tile.getBoundingClientRect();
     var scale = tRect.width / dRect.width;
     var dx = tRect.left - dRect.left;
@@ -530,10 +532,16 @@ function showProgramName(name) {
     el.classList.add('is-visible');
 }
 function hideProgramName() {
-    document.getElementById('program-name').classList.remove('is-visible');
+    var el = document.getElementById('program-name');
+    if (el) el.classList.remove('is-visible');
 }
 
 function fillDetailExtras(tile) {
+    var needed = ['detail-columns', 'detail-role', 'detail-role-lines', 'detail-programs',
+                  'program-icons', 'program-name', 'detail-trailer', 'detail-trailer-frame'];
+    for (var n = 0; n < needed.length; n++) {
+        if (!document.getElementById(needed[n])) return; // older index.html: skip extras, keep the rest working
+    }
     var cols = document.getElementById('detail-columns');
     var roleBox = document.getElementById('detail-role');
     var roleLines = document.getElementById('detail-role-lines');

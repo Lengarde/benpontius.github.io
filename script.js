@@ -301,8 +301,9 @@ function makeDetailGhost(detail, dRect, pinToViewport) {
     var ghost = detail.cloneNode(true);
     ghost.removeAttribute('id');
     Array.prototype.forEach.call(ghost.querySelectorAll('[id]'), function (n) { n.removeAttribute('id'); });
-    var ghostVideo = ghost.querySelector('iframe');
-    if (ghostVideo) ghostVideo.parentNode.removeChild(ghostVideo);
+    Array.prototype.forEach.call(ghost.querySelectorAll('iframe'), function (f) {
+        f.parentNode.removeChild(f);
+    });
     var ghostClose = ghost.querySelector('.detail-close');
     if (ghostClose) ghostClose.parentNode.removeChild(ghostClose);
     Array.prototype.forEach.call(ghost.querySelectorAll('.slide-nav, .slide-counter'), function (n) {
@@ -368,6 +369,7 @@ function shrinkGhostToTile(ghost, dRect, tile) {
 }
 
 function stopDetailVideo() {
+    clearTrailer();
     var detailVideo = document.getElementById('detail-video');
     var videoSlot = document.getElementById('detail-video-slot');
     detailVideo.src = '';
@@ -510,6 +512,108 @@ document.addEventListener('keydown', function (e) {
     area.addEventListener('touchcancel', function () { tracking = false; }, { passive: true });
 })();
 
+/* EXPANDED VIEW EXTRAS — role, programs used (hover an icon to see its name), project trailer.
+   Each is optional and comes from the tile's data attributes:
+     data-role="Creative Lead|Environment Design"            (lines separated by |)
+     data-programs="Maya|images/icons/maya.png; Reaper|images/icons/reaper.png"   (name|icon, separated by ;)
+     data-trailer="https://player.vimeo.com/video/XXXXXXX"   */
+function clearTrailer() {
+    var frame = document.getElementById('detail-trailer-frame');
+    if (frame) frame.src = '';
+}
+
+var programNameTimer = null;
+function showProgramName(name) {
+    var el = document.getElementById('program-name');
+    clearTimeout(programNameTimer);
+    el.textContent = name;
+    el.classList.add('is-visible');
+}
+function hideProgramName() {
+    document.getElementById('program-name').classList.remove('is-visible');
+}
+
+function fillDetailExtras(tile) {
+    var cols = document.getElementById('detail-columns');
+    var roleBox = document.getElementById('detail-role');
+    var roleLines = document.getElementById('detail-role-lines');
+    var progBox = document.getElementById('detail-programs');
+    var iconsBox = document.getElementById('program-icons');
+    var trailerBox = document.getElementById('detail-trailer');
+    var trailerFrame = document.getElementById('detail-trailer-frame');
+
+    roleBox.style.display = 'none';
+    progBox.style.display = 'none';
+    trailerBox.style.display = 'none';
+    roleLines.innerHTML = '';
+    iconsBox.innerHTML = '';
+    hideProgramName();
+    document.getElementById('program-name').textContent = '';
+    trailerFrame.src = '';
+
+    var roles = [], programs = [], trailer = '';
+    if (tile) {
+        roles = (tile.dataset.role || '').split('|').map(function (s) { return s.trim(); }).filter(Boolean);
+        programs = (tile.dataset.programs || '').split(';').map(function (s) {
+            var parts = s.split('|');
+            return { name: (parts[0] || '').trim(), icon: (parts[1] || '').trim() };
+        }).filter(function (p) { return p.name; });
+        trailer = (tile.dataset.trailer || '').trim();
+    }
+
+    if (roles.length) {
+        roles.forEach(function (r) {
+            var d = document.createElement('div');
+            d.textContent = r;
+            roleLines.appendChild(d);
+        });
+        roleBox.style.display = '';
+    }
+
+    if (programs.length) {
+        programs.forEach(function (p) {
+            var icon = document.createElement('span');
+            icon.className = 'program-icon';
+            icon.tabIndex = 0;
+            icon.setAttribute('aria-label', p.name);
+            function fallback() {
+                icon.innerHTML = '';
+                var f = document.createElement('span');
+                f.className = 'icon-fallback';
+                f.textContent = p.name.slice(0, 2);
+                icon.appendChild(f);
+            }
+            if (p.icon) {
+                var img = document.createElement('img');
+                img.alt = p.name;
+                img.draggable = false;
+                img.addEventListener('error', fallback);
+                img.src = p.icon;
+                icon.appendChild(img);
+            } else {
+                fallback();
+            }
+            icon.addEventListener('mouseenter', function () { showProgramName(p.name); });
+            icon.addEventListener('mouseleave', hideProgramName);
+            icon.addEventListener('focus', function () { showProgramName(p.name); });
+            icon.addEventListener('blur', hideProgramName);
+            iconsBox.appendChild(icon);
+        });
+        progBox.style.display = '';
+    }
+
+    if (trailer) {
+        trailerFrame.src = trailer;
+        trailerBox.style.display = '';
+    }
+
+    var any = roles.length || programs.length || trailer;
+    cols.style.display = any ? '' : 'none';
+    cols.classList.toggle('no-trailer', !trailer);
+    // With no role/programs, let the trailer sit centered on its own
+    cols.classList.toggle('trailer-only', !!trailer && !roles.length && !programs.length);
+}
+
 function openDetail(tile) {
     if (selectedTile === tile) return;
 
@@ -550,6 +654,7 @@ function openDetail(tile) {
         document.getElementById('detail-title').textContent = label ? label.textContent : 'Reel';
         document.getElementById('detail-description').textContent =
             'Add more information about this reel here.';
+        fillDetailExtras(null);
     } else {
         var img = tile.querySelector('img');
         var titleEl = tile.querySelector('h3');
@@ -579,6 +684,7 @@ function openDetail(tile) {
         document.getElementById('detail-title').textContent = titleEl ? titleEl.textContent : 'Project Title';
         document.getElementById('detail-description').textContent = tile.dataset.description ||
             'Add more information about this project here \u2014 process, tools used, and outcome.';
+        fillDetailExtras(tile);
     }
 
     // Ghost copy of the tile that will grow into the expanded window
@@ -684,6 +790,7 @@ function closeDetailImmediate() {
     detailVideo.src = '';
     detailVideo.style.display = 'none';
     videoSlot.style.display = 'none';
+    clearTrailer();
 
     var siblings = getProjectTiles().filter(function (t) {
         return t !== tile && t.style.display !== 'none';

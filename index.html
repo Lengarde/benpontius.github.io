@@ -83,12 +83,39 @@
             <div class="detail-info">
                 <h3 id="detail-title">Project Title</h3>
                 <p id="detail-description">Add more information about this project here — process, tools used, and outcome.</p>
+
+                <!-- Role / programs (left) and trailer (right). Filled from the tile's data attributes; hidden when a project has none -->
+                <div class="detail-columns" id="detail-columns" style="display:none;">
+                    <div class="detail-left">
+                        <div class="detail-role" id="detail-role" style="display:none;">
+                            <span class="detail-label">Role:</span>
+                            <div class="detail-role-lines" id="detail-role-lines"></div>
+                        </div>
+                        <div class="detail-programs" id="detail-programs" style="display:none;">
+                            <div class="programs-head">
+                                <span class="detail-label">Programs Used:</span>
+                                <span class="program-name" id="program-name" aria-live="polite"></span>
+                            </div>
+                            <div class="program-icons" id="program-icons"></div>
+                        </div>
+                    </div>
+                    <div class="detail-trailer" id="detail-trailer" style="display:none;">
+                        <div class="detail-label trailer-label">Project Trailer</div>
+                        <div class="trailer-frame">
+                            <iframe id="detail-trailer-frame" src="" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- All project tiles share one grid so filtering reflows them cleanly -->
         <div class="project-row">
-        <div class="home-tile category-animation" data-video="https://player.vimeo.com/video/1237753444">
+        <div class="home-tile category-animation" data-video="https://player.vimeo.com/video/1237753444"
+             data-description="Senior Capstone Project"
+             data-role="Creative Lead|Environment Design"
+             data-programs="Maya|images/icons/maya.png; DaVinci Resolve|images/icons/davinci.png; Reaper|images/icons/reaper.png"
+             data-trailer="https://player.vimeo.com/video/1237751440">
             <img src="images/kyber.jpg" alt="Project: Kyber">
             <div class="project-overlay">
                 <h3>Project Cinematics: Kyber</h3>
@@ -96,7 +123,7 @@
             </div>
         </div>
 
-        <div class="home-tile category-animation" data-video="https://player.vimeo.com/video/1239759322">
+        <div class="home-tile category-animation" data-video="https://player.vimeo.com/video/1239759322" data-description="Dragon Walk &amp; Shake">
             <img src="images/dragon.jpg" alt="Dragon">
             <div class="project-overlay">
                 <h3>Dragon Walk & Shake</h3>
@@ -105,7 +132,7 @@
         </div>
 
         <!-- HIDDEN: placeholder image (remove the comment markers to show again)
-        <div class="home-tile category-effects">
+        <div class="home-tile category-effects" data-description="Lego Escape">
             <img src="https://cdn.pixabay.com/photo/2023/05/08/15/14/dogwood-7978952_640.jpg" alt="Lego">
             <div class="project-overlay">
                 <h3>Lego Escape</h3>
@@ -114,7 +141,7 @@
         </div>
         -->
 
-        <div class="home-tile category-animation" data-video="videos/deborahbot.mp4">
+        <div class="home-tile category-animation" data-video="videos/deborahbot.mp4" data-description="Deborahbot">
             <img src="images/deborahbot.jpg" alt="Deborahbot9000">
             <div class="project-overlay">
                 <h3>Deborahbot</h3>
@@ -123,7 +150,7 @@
         </div>
 
         <!-- HIDDEN: placeholder image (remove the comment markers to show again)
-        <div class="home-tile category-effects">
+        <div class="home-tile category-effects" data-description="Crashing Wave">
             <img src="https://cdn.pixabay.com/photo/2018/05/19/07/43/rose-3412884_640.jpg" alt="Rose placeholder image">
             <div class="project-overlay">
                 <h3>Crashing Wave</h3>
@@ -133,7 +160,7 @@
         -->
 
         <!-- HIDDEN: placeholder image (remove the comment markers to show again)
-        <div class="home-tile category-animation">
+        <div class="home-tile category-animation" data-description="Weight">
             <img src="https://cdn.pixabay.com/photo/2015/03/26/18/11/rose-693155_640.jpg" alt="Rose placeholder image">
             <div class="project-overlay">
                 <h3>Weight</h3>
@@ -142,7 +169,7 @@
         </div>
         -->
 
-        <div class="home-tile category-misc">
+        <div class="home-tile category-misc" data-description="VAD Enterprise">
             <img src="images/vadthumbnail.jpg" alt="VAD Logo">
             <div class="project-overlay">
                 <h3>VAD Enterprise</h3>
@@ -151,7 +178,7 @@
         </div>
 
         <!-- Slideshow project: list every image for the expanded view in data-images, separated by | (replace these placeholders with your own files) -->
-        <div class="home-tile category-misc" data-images="images/concept_clothset.jpg|images/concept_staff.jpg|images/concept_talos.jpg">
+        <div class="home-tile category-misc" data-images="images/concept_clothset.jpg|images/concept_staff.jpg|images/concept_talos.jpg" data-description="Fantasy Attire">
             <img src="https://cdn.pixabay.com/photo/2019/06/17/06/43/rose-4279205_1280.jpg" alt="Pine tree placeholder image">
             <div class="project-overlay">
                 <h3>Fantasy Attire</h3>
@@ -174,7 +201,7 @@
     </p>
 
     <h2>Contact</h2>
-    <p>Email: benpontius03@gmail.com</p>
+    <p>Email: benpontius03@gmail.com.com</p>
 
     <!-- RESUME DOWNLOAD -->
     <a class="download" href="files/Resume.pdf">

@@ -672,7 +672,7 @@ function openDetail(tile) {
         videoSlot.style.display = 'flex';
         document.getElementById('detail-title').textContent = label ? label.textContent : 'Reel';
         document.getElementById('detail-description').textContent =
-            'Add more information about this reel here.';
+            'Fall 2026';
         fillDetailExtras(null);
     } else {
         var img = tile.querySelector('img');
